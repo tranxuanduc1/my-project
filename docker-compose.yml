@@ -1,0 +1,162 @@
+services:
+  iam:
+    build:
+      context: ./services/iam
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    working_dir: /app
+    command: ["sh", "-c", "go run ./cmd/api migrate && air -c .air.toml"]
+    env_file:
+      - ./services/iam/.env
+    ports: ["8081:8081"]
+    volumes:
+      - ./services/iam:/app
+      - iam_go_modules:/go/pkg/mod
+      - iam_build:/app/tmp
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8081/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  order:
+    build:
+      context: ./services/order
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    working_dir: /app
+    command: ["sh", "-c", "go run ./cmd/api migrate && air -c .air.toml"]
+    env_file:
+      - ./services/order/.env
+    ports: ["8082:8082"]
+    volumes:
+      - ./services/order:/app
+      - order_go_modules:/go/pkg/mod
+      - order_build:/app/tmp
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      meilisearch: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8082/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  payment:
+    build:
+      context: ./services/payment
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    working_dir: /app
+    command: ["sh", "-c", "go run ./cmd/api migrate && air -c .air.toml"]
+    env_file:
+      - ./services/payment/.env
+    ports: ["8083:8083"]
+    volumes:
+      - ./services/payment:/app
+      - payment_go_modules:/go/pkg/mod
+      - payment_build:/app/tmp
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8083/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-commerce}
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/001-schemas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d commerce"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    ports: ["6379:6379"]
+    volumes: ["redis_data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.53.1
+    restart: unless-stopped
+    environment:
+      MEILI_ENV: development
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-local-development-master-key}
+    ports: ["7700:7700"]
+    volumes: ["meilisearch_data:/meili_data"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["minio_data:/data"]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: app
+      RABBITMQ_DEFAULT_PASS: app
+    ports: ["5672:5672", "15672:15672"]
+    volumes: ["rabbitmq_data:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  postgres_data:
+  redis_data:
+  meilisearch_data:
+  minio_data:
+  rabbitmq_data:
+  iam_go_modules:
+  order_go_modules:
+  payment_go_modules:
+  iam_build:
+  order_build:
+  payment_build:

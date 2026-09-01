@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS iam.user_roles;
+DROP TABLE IF EXISTS iam.roles;
+DROP TABLE IF EXISTS iam.users;
