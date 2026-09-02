@@ -1,3 +1,3 @@
-DROP TABLE IF EXISTS iam.user_roles;
-DROP TABLE IF EXISTS iam.roles;
-DROP TABLE IF EXISTS iam.users;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS users;

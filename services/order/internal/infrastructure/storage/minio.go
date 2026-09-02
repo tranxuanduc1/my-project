@@ -15,7 +15,11 @@ type MinIOStorage struct {
 }
 
 func NewMinIOStorage(ctx context.Context, endpoint, publicEndpoint, accessKey, secretKey, bucket string) (*MinIOStorage, error) {
-	privateClient, err := minio.New(endpoint, &minio.Options{Creds: credentials.NewStaticV4(accessKey, secretKey, "")})
+	opts := &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
+		Region: "us-east-1",
+	}
+	privateClient, err := minio.New(endpoint, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +28,7 @@ func NewMinIOStorage(ctx context.Context, endpoint, publicEndpoint, accessKey, s
 			return nil, err
 		}
 	}
-	publicClient, err := minio.New(publicEndpoint, &minio.Options{Creds: credentials.NewStaticV4(accessKey, secretKey, "")})
+	publicClient, err := minio.New(publicEndpoint, opts)
 	if err != nil {
 		return nil, err
 	}

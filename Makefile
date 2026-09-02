@@ -1,10 +1,13 @@
-.PHONY: up down logs test tidy smoke
+.PHONY: up down logs test tidy smoke start
 
 up:
 	docker compose up --build
 
 down:
 	docker compose down
+
+start:
+	docker compose start
 
 logs:
 	docker compose logs -f iam order payment

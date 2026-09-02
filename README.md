@@ -1,7 +1,8 @@
 # MyProject commerce MVP
 
 Monorepo gồm ba Go service (`iam`, `order`, `payment`) dùng Gin, GORM,
-golang-migrate, PostgreSQL schema riêng, Redis, RabbitMQ, Meilisearch và MinIO.
+golang-migrate, PostgreSQL database riêng cho từng service, Redis, RabbitMQ,
+Meilisearch và MinIO.
 Payment là mock để có thể chạy trọn luồng local mà không cần tài khoản bên thứ ba.
 
 ## Kiến trúc source code
@@ -40,7 +41,7 @@ build/restart service tương ứng. Các endpoint:
 | IAM | http://localhost:8081 | admin@example.com / admin123456 |
 | Order | http://localhost:8082 | JWT từ IAM |
 | Payment | http://localhost:8083 | JWT từ IAM |
-| Adminer | http://localhost:8080 | postgres / postgres / commerce |
+| Adminer | http://localhost:8080 | postgres / postgres / iam, orders hoặc payments |
 | Meilisearch | http://localhost:7700 | master key trong `.env` |
 | MinIO console | http://localhost:9001 | minioadmin / minioadmin |
 | RabbitMQ console | http://localhost:15672 | app / app |

@@ -76,13 +76,13 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-commerce}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     ports: ["5432:5432"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/001-schemas.sql:ro
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/001-databases.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d commerce"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 10

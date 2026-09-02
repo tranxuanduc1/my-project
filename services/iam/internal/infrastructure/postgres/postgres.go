@@ -137,7 +137,7 @@ func (s *Store) UpdateRole(ctx context.Context, id string, role domain.Role) (bo
 
 func (s *Store) DeleteRole(ctx context.Context, id string) (bool, error) {
 	var count int64
-	if err := s.db.WithContext(ctx).Table("iam.user_roles").Where("role_id = ?", id).Count(&count).Error; err != nil {
+	if err := s.db.WithContext(ctx).Table("user_roles").Where("role_id = ?", id).Count(&count).Error; err != nil {
 		return false, err
 	}
 	if count > 0 {

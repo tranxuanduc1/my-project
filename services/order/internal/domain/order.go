@@ -21,7 +21,7 @@ type Product struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-func (Product) TableName() string { return "orders.products" }
+func (Product) TableName() string { return "products" }
 
 type Order struct {
 	ID             uuid.UUID   `gorm:"type:uuid;primaryKey" json:"id"`
@@ -35,7 +35,7 @@ type Order struct {
 	UpdatedAt      time.Time   `json:"updated_at"`
 }
 
-func (Order) TableName() string { return "orders.orders" }
+func (Order) TableName() string { return "orders" }
 
 type OrderItem struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
@@ -48,7 +48,7 @@ type OrderItem struct {
 	LineTotalCents int64     `json:"line_total_cents"`
 }
 
-func (OrderItem) TableName() string { return "orders.order_items" }
+func (OrderItem) TableName() string { return "order_items" }
 
 type Outbox struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey"`
@@ -58,11 +58,11 @@ type Outbox struct {
 	PublishedAt *time.Time
 }
 
-func (Outbox) TableName() string { return "orders.outbox_events" }
+func (Outbox) TableName() string { return "outbox_events" }
 
 type Inbox struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey"`
 	ProcessedAt time.Time
 }
 
-func (Inbox) TableName() string { return "orders.inbox_events" }
+func (Inbox) TableName() string { return "inbox_events" }

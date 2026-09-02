@@ -20,7 +20,7 @@ type Payment struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
-func (Payment) TableName() string { return "payments.payments" }
+func (Payment) TableName() string { return "payments" }
 
 type Outbox struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey"`
@@ -30,11 +30,11 @@ type Outbox struct {
 	PublishedAt *time.Time
 }
 
-func (Outbox) TableName() string { return "payments.outbox_events" }
+func (Outbox) TableName() string { return "outbox_events" }
 
 type Inbox struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey"`
 	ProcessedAt time.Time
 }
 
-func (Inbox) TableName() string { return "payments.inbox_events" }
+func (Inbox) TableName() string { return "inbox_events" }

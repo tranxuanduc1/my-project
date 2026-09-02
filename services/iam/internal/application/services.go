@@ -53,7 +53,7 @@ func (s *AuthService) SeedAdmin(ctx context.Context, email, password string) err
 
 func (s *AuthService) Register(ctx context.Context, email, password string) (domain.User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
-	if !strings.Contains(email, "@") || len(password) < 8 {
+	if !strings.Contains(email, "@") || len(password) < 4 {
 		return domain.User{}, ErrInvalidInput
 	}
 	role, err := s.roles.FindRoleByName(ctx, "customer")

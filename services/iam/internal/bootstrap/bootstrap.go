@@ -14,7 +14,7 @@ import (
 func env(k, d string) string { return config.Env(k, d) }
 
 func Migrate() error {
-	dsn := env("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/commerce?sslmode=disable")
+	dsn := env("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/iam?sslmode=disable")
 	return postgres.Migrate(env("MIGRATIONS_PATH", "file://migrations"), dsn)
 }
 
@@ -22,7 +22,7 @@ func Run() error {
 	if err := Migrate(); err != nil {
 		return err
 	}
-	store, err := postgres.Open(env("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/commerce?sslmode=disable"))
+	store, err := postgres.Open(env("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/iam?sslmode=disable"))
 	if err != nil {
 		return err
 	}
