@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	app "myproject/order/internal/application"
+	"myproject/order/internal/application/apperrors"
 	"myproject/order/internal/application/ports"
 	"myproject/order/internal/transport/httpauth"
 
@@ -64,11 +65,11 @@ func userScope(c *gin.Context) *uuid.UUID {
 
 func writeProductError(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, app.ErrInvalidInput):
+	case errors.Is(err, apperrors.ErrInvalidInput):
 		c.JSON(400, gin.H{"error": "invalid product"})
-	case errors.Is(err, app.ErrNotFound):
+	case errors.Is(err, apperrors.ErrNotFound):
 		c.JSON(404, gin.H{"error": "not found"})
-	case errors.Is(err, app.ErrConflict):
+	case errors.Is(err, apperrors.ErrConflict):
 		c.JSON(409, gin.H{"error": "conflict"})
 	default:
 		c.JSON(500, gin.H{"error": err.Error()})

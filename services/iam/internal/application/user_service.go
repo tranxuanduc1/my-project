@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 
+	"myproject/iam/internal/application/apperrors"
 	"myproject/iam/internal/application/ports"
 	"myproject/iam/internal/domain"
 )
@@ -23,21 +24,21 @@ func (s *UserService) Get(ctx context.Context, id string) (domain.User, error) {
 
 func (s *UserService) SetStatus(ctx context.Context, id, status string) error {
 	if status != "active" && status != "disabled" {
-		return ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	ok, err := s.users.SetUserStatus(ctx, id, status)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return ErrNotFound
+		return apperrors.ErrNotFound
 	}
 	return nil
 }
 
 func (s *UserService) SetRoles(ctx context.Context, id string, roleNames []string) error {
 	if len(roleNames) == 0 {
-		return ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	return s.users.SetUserRoles(ctx, id, roleNames)
 }

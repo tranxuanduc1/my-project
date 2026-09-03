@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"myproject/order/internal/application/apperrors"
 	"myproject/order/internal/application/ports"
 	"myproject/order/internal/domain"
 
@@ -20,7 +21,7 @@ func NewOrderService(orders ports.OrderRepository) *OrderService {
 
 func (s *OrderService) Create(ctx context.Context, userID uuid.UUID, key string, items []ports.OrderItemInput) (domain.Order, bool, error) {
 	if strings.TrimSpace(key) == "" || len(items) == 0 {
-		return domain.Order{}, false, ErrInvalidInput
+		return domain.Order{}, false, apperrors.ErrInvalidInput
 	}
 	return s.orders.CreateOrder(ctx, userID, strings.TrimSpace(key), items)
 }

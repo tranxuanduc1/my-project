@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	app "myproject/payment/internal/application"
+	"myproject/payment/internal/application/apperrors"
 	"myproject/payment/internal/application/ports"
 	"myproject/payment/internal/transport/httpauth"
 
@@ -39,9 +40,9 @@ func scope(c *gin.Context) *uuid.UUID {
 
 func writePaymentError(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, app.ErrNotFound):
+	case errors.Is(err, apperrors.ErrNotFound):
 		c.JSON(404, gin.H{"error": "not found"})
-	case errors.Is(err, app.ErrReconcileOrder):
+	case errors.Is(err, apperrors.ErrReconcileOrder):
 		c.JSON(503, gin.H{"error": "order reconciliation failed: " + err.Error()})
 	default:
 		c.JSON(409, gin.H{"error": err.Error()})

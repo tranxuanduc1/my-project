@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"myproject/iam/internal/application/apperrors"
 	"myproject/iam/internal/application/ports"
 	"myproject/iam/internal/domain"
 	"myproject/iam/internal/transport/httpauth"
@@ -54,7 +55,7 @@ func (s *AuthService) SeedAdmin(ctx context.Context, email, password string) err
 func (s *AuthService) Register(ctx context.Context, email, password string) (domain.User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	if !strings.Contains(email, "@") || len(password) < 4 {
-		return domain.User{}, ErrInvalidInput
+		return domain.User{}, apperrors.ErrInvalidInput
 	}
 	role, err := s.roles.FindRoleByName(ctx, "customer")
 	if err != nil {
@@ -74,7 +75,7 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (dom
 func (s *AuthService) Login(ctx context.Context, email, password string) (TokenResponse, error) {
 	user, err := s.users.FindUserByEmail(ctx, strings.ToLower(strings.TrimSpace(email)))
 	if err != nil || user.Status != "active" || bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)) != nil {
-		return TokenResponse{}, ErrUnauthorized
+		return TokenResponse{}, apperrors.ErrUnauthorized
 	}
 	roles := make([]string, 0, len(user.Roles))
 	for _, role := range user.Roles {

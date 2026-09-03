@@ -36,6 +36,7 @@ type ProductSearch interface {
 
 type ProductStorage interface {
 	PresignProductImage(ctx context.Context, productID uuid.UUID, ttl time.Duration) (uploadURL, objectKey string, err error)
+	PresignProductImageView(ctx context.Context, objectKey string, ttl time.Duration) (string, error)
 }
 
 type OrderItemInput struct {

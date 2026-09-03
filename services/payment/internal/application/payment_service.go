@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"myproject/payment/internal/application/apperrors"
 	"myproject/payment/internal/application/ports"
 	"myproject/payment/internal/domain"
 
@@ -51,10 +52,10 @@ func (s *PaymentService) decide(ctx context.Context, id string, userID *uuid.UUI
 		return payment, nil
 	}
 	if payment.Status != "pending" {
-		return domain.Payment{}, ErrConflict
+		return domain.Payment{}, apperrors.ErrConflict
 	}
 	if err := s.orders.CheckOrder(ctx, payment); err != nil {
-		return domain.Payment{}, fmt.Errorf("%w: %v", ErrReconcileOrder, err)
+		return domain.Payment{}, fmt.Errorf("%w: %v", apperrors.ErrReconcileOrder, err)
 	}
 	return s.payments.FinalizePayment(ctx, payment.ID, status, reason)
 }

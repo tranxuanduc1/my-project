@@ -1,13 +1,16 @@
-.PHONY: up down logs test tidy smoke start
+.PHONY: up down logs test tidy smoke start init-db
 
 up:
-	docker compose up --build
+	docker compose up -d --build
 
 down:
 	docker compose down
 
 start:
 	docker compose start
+
+init-db:
+	docker compose exec -T postgres psql -U postgres -d postgres -f /docker-entrypoint-initdb.d/001-databases.sql
 
 logs:
 	docker compose logs -f iam order payment

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"myproject/order/internal/application/apperrors"
 	"myproject/order/internal/application/ports"
 	"myproject/order/internal/domain"
 
@@ -32,28 +33,35 @@ func (s *ProductService) List(ctx context.Context, query string, limit, offset i
 	query = strings.TrimSpace(query)
 	if query != "" && s.search != nil {
 		if products, err := s.search.SearchProducts(ctx, query, limit, offset); err == nil {
-			return products, nil
+			return s.withImageURLs(ctx, products)
 		}
 	}
-	return s.products.ListProducts(ctx, query, limit, offset)
+	products, err := s.products.ListProducts(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return s.withImageURLs(ctx, products)
 }
 
 func (s *ProductService) Get(ctx context.Context, id string) (domain.Product, error) {
 	if s.cache != nil {
 		if product, ok := s.cache.GetProduct(ctx, id); ok {
-			return product, nil
+			return s.withImageURL(ctx, product)
 		}
 	}
 	product, err := s.products.GetProduct(ctx, id)
 	if err == nil && s.cache != nil {
 		s.cache.SetProduct(ctx, product)
 	}
-	return product, err
+	if err != nil {
+		return domain.Product{}, err
+	}
+	return s.withImageURL(ctx, product)
 }
 
 func (s *ProductService) Create(ctx context.Context, product domain.Product) (domain.Product, error) {
 	if product.SKU == "" || product.Name == "" || product.PriceCents < 0 || product.Stock < 0 {
-		return domain.Product{}, ErrInvalidInput
+		return domain.Product{}, apperrors.ErrInvalidInput
 	}
 	product.ID = uuid.New()
 	if product.Currency == "" {
@@ -64,12 +72,12 @@ func (s *ProductService) Create(ctx context.Context, product domain.Product) (do
 		return domain.Product{}, err
 	}
 	go s.index(context.Background(), product, false)
-	return product, nil
+	return s.withImageURL(ctx, product)
 }
 
 func (s *ProductService) Update(ctx context.Context, id string, product domain.Product) (domain.Product, error) {
 	if product.Name == "" || product.PriceCents < 0 || product.Stock < 0 {
-		return domain.Product{}, ErrInvalidInput
+		return domain.Product{}, apperrors.ErrInvalidInput
 	}
 	updated, err := s.products.UpdateProduct(ctx, id, product)
 	if err != nil {
@@ -79,7 +87,7 @@ func (s *ProductService) Update(ctx context.Context, id string, product domain.P
 		s.cache.DeleteProduct(ctx, id)
 	}
 	go s.index(context.Background(), updated, false)
-	return updated, nil
+	return s.withImageURL(ctx, updated)
 }
 
 func (s *ProductService) Delete(ctx context.Context, id string) error {
@@ -99,7 +107,7 @@ func (s *ProductService) Delete(ctx context.Context, id string) error {
 
 func (s *ProductService) PresignImage(ctx context.Context, id, contentType string) (string, string, error) {
 	if !strings.HasPrefix(contentType, "image/") {
-		return "", "", ErrInvalidInput
+		return "", "", apperrors.ErrInvalidInput
 	}
 	product, err := s.products.GetProduct(ctx, id)
 	if err != nil {
@@ -109,7 +117,38 @@ func (s *ProductService) PresignImage(ctx context.Context, id, contentType strin
 	if err != nil {
 		return "", "", err
 	}
-	return url, key, s.products.SetProductImage(ctx, id, key)
+	if err := s.products.SetProductImage(ctx, id, key); err != nil {
+		return "", "", err
+	}
+	if s.cache != nil {
+		s.cache.DeleteProduct(ctx, id)
+	}
+	product.ImageObjectKey = key
+	go s.index(context.Background(), product, false)
+	return url, key, nil
+}
+
+func (s *ProductService) withImageURLs(ctx context.Context, products []domain.Product) ([]domain.Product, error) {
+	for i := range products {
+		product, err := s.withImageURL(ctx, products[i])
+		if err != nil {
+			return nil, err
+		}
+		products[i] = product
+	}
+	return products, nil
+}
+
+func (s *ProductService) withImageURL(ctx context.Context, product domain.Product) (domain.Product, error) {
+	if product.ImageObjectKey == "" || s.storage == nil {
+		return product, nil
+	}
+	url, err := s.storage.PresignProductImageView(ctx, product.ImageObjectKey, 15*time.Minute)
+	if err != nil {
+		return domain.Product{}, err
+	}
+	product.ImageURL = url
+	return product, nil
 }
 
 func (s *ProductService) index(ctx context.Context, product domain.Product, deleted bool) {

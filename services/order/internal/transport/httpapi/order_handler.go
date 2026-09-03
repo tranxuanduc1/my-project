@@ -3,7 +3,7 @@ package httpapi
 import (
 	"errors"
 
-	app "myproject/order/internal/application"
+	"myproject/order/internal/application/apperrors"
 	"myproject/order/internal/application/ports"
 	"myproject/order/internal/transport/httpauth"
 
@@ -20,7 +20,7 @@ func (h *Handler) createOrder(c *gin.Context) {
 	}
 	order, existing, err := h.orders.Create(c, httpauth.UserID(c), c.GetHeader("Idempotency-Key"), in.Items)
 	if err != nil {
-		if errors.Is(err, app.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			c.JSON(400, gin.H{"error": "items required"})
 			return
 		}

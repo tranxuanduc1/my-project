@@ -3,7 +3,7 @@ package httpapi
 import (
 	"errors"
 
-	app "myproject/iam/internal/application"
+	"myproject/iam/internal/application/apperrors"
 	"myproject/iam/internal/transport/httpauth"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +17,7 @@ func (h *Handler) register(c *gin.Context) {
 	}
 	user, err := h.auth.Register(c, in.Email, in.Password)
 	if err != nil {
-		if errors.Is(err, app.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			c.JSON(400, gin.H{"error": "email hợp lệ và password tối thiểu 8 ký tự là bắt buộc"})
 			return
 		}

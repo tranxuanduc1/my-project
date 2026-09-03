@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 
+	"myproject/iam/internal/application/apperrors"
 	"myproject/iam/internal/application/ports"
 	"myproject/iam/internal/domain"
 
@@ -21,7 +22,7 @@ func (s *RoleService) List(ctx context.Context) ([]domain.Role, error) {
 
 func (s *RoleService) Create(ctx context.Context, role domain.Role) (domain.Role, error) {
 	if role.Name == "" {
-		return domain.Role{}, ErrInvalidInput
+		return domain.Role{}, apperrors.ErrInvalidInput
 	}
 	role.ID = uuid.New()
 	return role, s.roles.CreateRole(ctx, role)
@@ -29,14 +30,14 @@ func (s *RoleService) Create(ctx context.Context, role domain.Role) (domain.Role
 
 func (s *RoleService) Update(ctx context.Context, id string, role domain.Role) error {
 	if role.Name == "" {
-		return ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	ok, err := s.roles.UpdateRole(ctx, id, role)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return ErrNotFound
+		return apperrors.ErrNotFound
 	}
 	return nil
 }
@@ -47,7 +48,7 @@ func (s *RoleService) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	if !ok {
-		return ErrNotFound
+		return apperrors.ErrNotFound
 	}
 	return nil
 }

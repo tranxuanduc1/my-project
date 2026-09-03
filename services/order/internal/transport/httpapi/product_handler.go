@@ -3,7 +3,7 @@ package httpapi
 import (
 	"errors"
 
-	app "myproject/order/internal/application"
+	"myproject/order/internal/application/apperrors"
 	"myproject/order/internal/domain"
 
 	"github.com/gin-gonic/gin"
@@ -74,7 +74,7 @@ func (h *Handler) presignImage(c *gin.Context) {
 	}
 	url, key, err := h.products.PresignImage(c, c.Param("id"), in.ContentType)
 	if err != nil {
-		if errors.Is(err, app.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			c.JSON(400, gin.H{"error": "image content_type required"})
 			return
 		}

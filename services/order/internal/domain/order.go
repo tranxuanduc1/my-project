@@ -16,6 +16,7 @@ type Product struct {
 	Currency       string    `json:"currency"`
 	Stock          int       `json:"stock"`
 	ImageObjectKey string    `json:"image_object_key,omitempty"`
+	ImageURL       string    `gorm:"-" json:"image_url"`
 	Active         bool      `json:"active"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`

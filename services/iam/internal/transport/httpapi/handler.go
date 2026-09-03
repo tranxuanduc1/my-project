@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	app "myproject/iam/internal/application"
+	"myproject/iam/internal/application/apperrors"
 	"myproject/iam/internal/application/ports"
 
 	"github.com/gin-gonic/gin"
@@ -31,11 +32,11 @@ func (h *Handler) healthz(c *gin.Context) {
 
 func writeUserError(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, app.ErrInvalidInput):
+	case errors.Is(err, apperrors.ErrInvalidInput):
 		c.JSON(400, gin.H{"error": "roles required"})
-	case errors.Is(err, app.ErrUnknownRole):
+	case errors.Is(err, apperrors.ErrUnknownRole):
 		c.JSON(400, gin.H{"error": "unknown role"})
-	case errors.Is(err, app.ErrNotFound):
+	case errors.Is(err, apperrors.ErrNotFound):
 		c.JSON(404, gin.H{"error": "not found"})
 	default:
 		c.JSON(500, gin.H{"error": err.Error()})
@@ -44,13 +45,13 @@ func writeUserError(c *gin.Context, err error) {
 
 func writeRoleError(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, app.ErrInvalidInput):
+	case errors.Is(err, apperrors.ErrInvalidInput):
 		c.JSON(400, gin.H{"error": "name required"})
-	case errors.Is(err, app.ErrConflict):
+	case errors.Is(err, apperrors.ErrConflict):
 		c.JSON(409, gin.H{"error": "role exists"})
-	case errors.Is(err, app.ErrRoleInUse):
+	case errors.Is(err, apperrors.ErrRoleInUse):
 		c.JSON(409, gin.H{"error": "role is in use"})
-	case errors.Is(err, app.ErrNotFound):
+	case errors.Is(err, apperrors.ErrNotFound):
 		c.JSON(404, gin.H{"error": "not found"})
 	default:
 		c.JSON(500, gin.H{"error": err.Error()})

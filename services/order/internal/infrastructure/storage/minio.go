@@ -43,3 +43,11 @@ func (s *MinIOStorage) PresignProductImage(ctx context.Context, productID uuid.U
 	}
 	return url.String(), key, nil
 }
+
+func (s *MinIOStorage) PresignProductImageView(ctx context.Context, objectKey string, ttl time.Duration) (string, error) {
+	url, err := s.client.PresignedGetObject(ctx, s.bucket, objectKey, ttl, nil)
+	if err != nil {
+		return "", err
+	}
+	return url.String(), nil
+}
