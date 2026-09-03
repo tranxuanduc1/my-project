@@ -45,6 +45,10 @@ build/restart service tương ứng. Các endpoint:
 | Meilisearch | http://localhost:7700 | master key trong `.env` |
 | MinIO console | http://localhost:9001 | minioadmin / minioadmin |
 | RabbitMQ console | http://localhost:15672 | app / app |
+| Grafana | http://localhost:3000 | admin / admin, datasource đã provision |
+| Prometheus | http://localhost:9090 | scrape Prometheus và OpenTelemetry Collector |
+| Loki | http://localhost:3100 | log backend local |
+| Tempo | http://localhost:3200 | trace backend local |
 
 Health check lần lượt ở `/health`. Chạy business flow mẫu sau khi stack healthy:
 

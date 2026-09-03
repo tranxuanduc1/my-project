@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"errors"
+	"log/slog"
 
 	"myproject/order/internal/application/apperrors"
 	"myproject/order/internal/application/ports"
@@ -15,12 +16,14 @@ func (h *Handler) createOrder(c *gin.Context) {
 		Items []ports.OrderItemInput `json:"items"`
 	}
 	if c.ShouldBindJSON(&in) != nil {
+		slog.WarnContext(c, "create order request rejected", "reason", "invalid json")
 		c.JSON(400, gin.H{"error": "items required"})
 		return
 	}
 	order, existing, err := h.orders.Create(c, httpauth.UserID(c), c.GetHeader("Idempotency-Key"), in.Items)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrInvalidInput) {
+			slog.WarnContext(c, "create order request rejected", "reason", "invalid input", "item_count", len(in.Items))
 			c.JSON(400, gin.H{"error": "items required"})
 			return
 		}

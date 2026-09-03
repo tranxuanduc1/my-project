@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"log/slog"
 
 	"myproject/order/internal/application/ports"
 
@@ -17,5 +18,10 @@ func NewPaymentEventService(orders ports.OrderRepository) *PaymentEventService {
 }
 
 func (s *PaymentEventService) ApplyPayment(ctx context.Context, eventID, orderID uuid.UUID, eventType string) error {
-	return s.orders.ApplyPayment(ctx, eventID, orderID, eventType)
+	if err := s.orders.ApplyPayment(ctx, eventID, orderID, eventType); err != nil {
+		slog.ErrorContext(ctx, "payment event apply failed", "event_id", eventID, "order_id", orderID, "event_type", eventType, "error", err)
+		return err
+	}
+	slog.InfoContext(ctx, "payment event applied", "event_id", eventID, "order_id", orderID, "event_type", eventType)
+	return nil
 }
