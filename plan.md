@@ -393,7 +393,6 @@ Publisher hiện chạy nền bằng context riêng. Nếu chỉ inject context 
 6. Chọn quan hệ trace rõ ràng:
 
    - MVP có thể tiếp tục parent context qua message để UI dễ theo dõi.
-   - Nếu event có thể nằm trong outbox rất lâu, cân nhắc tạo trace mới và dùng span link tới producer context; phải giải thích quyết định.
 
 7. Custom metrics tối thiểu:
 

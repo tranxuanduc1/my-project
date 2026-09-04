@@ -18,7 +18,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func env(k, d string) string { return config.Env(k, d) }
@@ -48,14 +47,10 @@ func Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	httpClient := &http.Client{
-		Timeout:   3 * time.Second,
-		Transport: otelhttp.NewTransport(http.DefaultTransport),
-	}
 	productService := application.NewProductService(
 		store,
 		cache.NewRedisProductCache(env("REDIS_ADDR", "localhost:6379"), time.Minute),
-		search.NewMeiliSearch(env("MEILISEARCH_URL", "http://localhost:7700"), env("MEILISEARCH_API_KEY", "local-development-master-key"), httpClient),
+		search.NewMeiliSearch(env("MEILISEARCH_URL", "http://localhost:7700"), env("MEILISEARCH_API_KEY", "local-development-master-key"), search.NewHTTPClient(3*time.Second)),
 		objectStorage,
 	)
 	orderService := application.NewOrderService(store)
@@ -69,6 +64,7 @@ func Run(ctx context.Context) error {
 	r.ContextWithFallback = true
 	r.Use(
 		otelgin.Middleware("order"),
+		httpapi.MetricsMiddleware(),
 		httpapi.AccessLogMiddleware(),
 		httpapi.RecoveryMiddleware(),
 	)

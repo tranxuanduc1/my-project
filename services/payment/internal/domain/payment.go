@@ -26,6 +26,7 @@ type Outbox struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey"`
 	EventType   string
 	Payload     datatypes.JSON
+	Headers     datatypes.JSONMap `gorm:"type:jsonb"`
 	CreatedAt   time.Time
 	PublishedAt *time.Time
 }

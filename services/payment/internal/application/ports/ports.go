@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"myproject/payment/internal/domain"
 
@@ -29,5 +30,6 @@ type OrderCreatedHandler interface {
 
 type OutboxStore interface {
 	PendingOutbox(ctx context.Context, limit int) ([]domain.Outbox, error)
+	OutboxStats(ctx context.Context) (pending int64, oldestAge time.Duration, err error)
 	MarkOutboxPublished(ctx context.Context, id uuid.UUID) error
 }

@@ -16,10 +16,13 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"gorm.io/datatypes"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	otelgorm "gorm.io/plugin/opentelemetry/tracing"
 )
 
 type Store struct{ db *gorm.DB }
@@ -27,6 +30,12 @@ type Store struct{ db *gorm.DB }
 func Open(dsn string) (*Store, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Use(otelgorm.NewPlugin(
+		otelgorm.WithDBSystem("postgresql"),
+		otelgorm.WithoutQueryVariables(),
+	)); err != nil {
 		return nil, err
 	}
 	return &Store{db: db}, nil
@@ -161,7 +170,7 @@ func (s *Store) CreateOrder(ctx context.Context, userID uuid.UUID, idempotencyKe
 		}
 		eventID := uuid.New()
 		payload, _ := json.Marshal(map[string]any{"event_id": eventID, "event_type": "order.created", "version": 1, "occurred_at": time.Now().UTC(), "order_id": order.ID, "user_id": order.UserID, "amount_cents": order.AmountCents, "currency": order.Currency})
-		if err := tx.Create(&domain.Outbox{ID: eventID, EventType: "order.created", Payload: datatypes.JSON(payload)}).Error; err != nil {
+		if err := tx.Create(&domain.Outbox{ID: eventID, EventType: "order.created", Payload: datatypes.JSON(payload), Headers: propagationHeaders(ctx)}).Error; err != nil {
 			return err
 		}
 		result = order
@@ -263,6 +272,33 @@ func (s *Store) PendingOutbox(ctx context.Context, limit int) ([]domain.Outbox, 
 	return events, err
 }
 
+func (s *Store) OutboxStats(ctx context.Context) (int64, time.Duration, error) {
+	var pending int64
+	if err := s.db.WithContext(ctx).Model(&domain.Outbox{}).Where("published_at IS NULL").Count(&pending).Error; err != nil {
+		return 0, 0, err
+	}
+	if pending == 0 {
+		return 0, 0, nil
+	}
+	var oldest domain.Outbox
+	if err := s.db.WithContext(ctx).Where("published_at IS NULL").Order("created_at").First(&oldest).Error; err != nil {
+		return 0, 0, err
+	}
+	return pending, time.Since(oldest.CreatedAt), nil
+}
+
 func (s *Store) MarkOutboxPublished(ctx context.Context, id uuid.UUID) error {
 	return s.db.WithContext(ctx).Model(&domain.Outbox{}).Where("id = ?", id).Update("published_at", time.Now()).Error
+}
+
+func propagationHeaders(ctx context.Context) datatypes.JSONMap {
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+	headers := datatypes.JSONMap{}
+	for key, value := range carrier {
+		if value != "" {
+			headers[key] = value
+		}
+	}
+	return headers
 }

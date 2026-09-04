@@ -7,11 +7,13 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"myproject/order/internal/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type MeiliSearch struct {
@@ -21,7 +23,21 @@ type MeiliSearch struct {
 }
 
 func NewMeiliSearch(baseURL, apiKey string, client *http.Client) *MeiliSearch {
+	if client == nil {
+		client = NewHTTPClient(3 * time.Second)
+	}
 	return &MeiliSearch{baseURL: strings.TrimRight(baseURL, "/"), apiKey: apiKey, http: client}
+}
+
+func NewHTTPClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Timeout: timeout,
+		Transport: otelhttp.NewTransport(http.DefaultTransport,
+			otelhttp.WithSpanNameFormatter(func(_ string, req *http.Request) string {
+				return req.Method + " " + meiliRouteTemplate(req.URL.Path)
+			}),
+		),
+	}
 }
 
 func (s *MeiliSearch) SearchProducts(ctx context.Context, query string, limit, offset int) ([]domain.Product, error) {
@@ -67,4 +83,17 @@ func (s *MeiliSearch) DeleteProduct(ctx context.Context, id uuid.UUID) error {
 func (s *MeiliSearch) setHeaders(req *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+s.apiKey)
 	req.Header.Set("Content-Type", "application/json")
+}
+
+func meiliRouteTemplate(path string) string {
+	switch {
+	case path == "/indexes/products/search":
+		return "/indexes/products/search"
+	case path == "/indexes/products/documents":
+		return "/indexes/products/documents"
+	case strings.HasPrefix(path, "/indexes/products/documents/"):
+		return "/indexes/products/documents/:id"
+	default:
+		return "/meilisearch"
+	}
 }

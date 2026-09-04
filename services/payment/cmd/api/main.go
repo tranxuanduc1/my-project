@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
+	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"myproject/payment/internal/bootstrap"
+	"myproject/payment/internal/infrastructure/observability"
 )
 
 func main() {
@@ -14,7 +19,26 @@ func main() {
 		}
 		return
 	}
-	if err := bootstrap.Run(); err != nil {
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	obs, err := observability.Setup(ctx, observability.LoadConfig(), os.Stdout)
+	if err != nil {
 		log.Fatal(err)
+	}
+	slog.SetDefault(obs.Logger)
+	defer func() {
+		if err := obs.Shutdown(context.Background()); err != nil {
+			obs.Logger.Error("telemetry shutdown failed", "error", err)
+		}
+	}()
+
+	if err := bootstrap.Run(ctx); err != nil {
+		obs.Logger.Error("payment service failed", "error", err)
+		if shutdownErr := obs.Shutdown(context.Background()); shutdownErr != nil {
+			obs.Logger.Error("telemetry shutdown failed", "error", shutdownErr)
+		}
+		os.Exit(1)
 	}
 }

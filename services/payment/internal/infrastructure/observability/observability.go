@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"myproject/order/internal/infrastructure/config"
+	"myproject/payment/internal/infrastructure/config"
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
@@ -31,7 +31,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const serviceName = "order"
+const serviceName = "payment"
 
 var processStartedAt = time.Now()
 
@@ -146,10 +146,10 @@ func Setup(ctx context.Context, cfg Config, out io.Writer) (*Providers, error) {
 }
 
 func registerProcessMetrics(meterProvider metric.MeterProvider) (metric.Registration, error) {
-	meter := meterProvider.Meter("myproject/order/process")
+	meter := meterProvider.Meter("myproject/payment/process")
 	uptime, err := meter.Float64ObservableGauge(
 		"process.uptime",
-		metric.WithDescription("Seconds since the order process started."),
+		metric.WithDescription("Seconds since the payment process started."),
 		metric.WithUnit("s"),
 	)
 	if err != nil {
@@ -166,7 +166,7 @@ func NewLogger(cfg Config, out io.Writer, provider *sdklog.LoggerProvider) *slog
 	level.Set(parseLogLevel(cfg.LogLevel))
 	stdout := slog.NewJSONHandler(out, &slog.HandlerOptions{Level: level})
 	otelHandler := otelslog.NewHandler(
-		"myproject/order",
+		"myproject/payment",
 		otelslog.WithLoggerProvider(provider),
 		otelslog.WithVersion(cfg.ServiceVersion),
 	)

@@ -1,10 +1,13 @@
-.PHONY: up down logs test tidy smoke start init-db
+.PHONY: up down restart logs test tidy smoke start init-db
 
 up:
 	docker compose up -d --build
 
 down:
 	docker compose down
+
+restart:
+	docker compose restart
 
 start:
 	docker compose start
